@@ -21,3 +21,16 @@ cmake-build-*/
 # PlatformIO Settings
 .pio
 
+# JetBrains IDE settings
+.idea
+
+# build out
+*.elf
+*.hex
+*.lst
+*.bin
+*.map
+minichlink/minichlink
+minichlink/minichlink.so
+compile_commands.json
+ch32fun/generated_*.ld

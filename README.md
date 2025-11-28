@@ -10,6 +10,10 @@ USB HID reported (device to PC) that it has not been tested and may not function
 
 # How to use
 
+You can download the firmwall in the [release](https://github.com/Deadline039/lcus-hid-relay/releases). Then you need to use WCH-LinkE to download. Reference: [WCH-Link User Manual](https://akizukidenshi.com/goodsaffix/WCH-LinkUserManual.pdf)
+
+# How to build
+
 First, you need to install the toolchain. You can refer to [this wiki page](https://github.com/cnlohr/ch32fun/wiki/Installation).
 
 Then, go to the `hid-relay` folder. You can run `make` to build and download (make sure your WCH-LinkE and chip are connected), or run `make build` to build only.
