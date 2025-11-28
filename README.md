@@ -4,7 +4,7 @@ This is a USB HID relay that can control 2 lines. The instructions are compatibl
 
 ![](images/taobao.png)
 
-Special thanks to [rv003usb](https://github.com/cnlohr/rv003usb) for creating the USB HID library, which allows me to run USB HID on the CH32V003J4M6. This chip has only 8 pins and does not integrate USB peripherals. Thanks also to the [OneKVM](https://docs.one-kvm.cn/) Python script, which made testing possible.
+Special thanks to [rv003usb](https://github.com/cnlohr/rv003usb) for creating the USB HID library, which allows me to run USB HID on the CH32V003J4M6. This chip has only 8 pins and does not integrate USB peripherals. Thanks also to the [PiKVM](https://github.com/pikvm/pikvm) Python script, which made testing possible.
 
 USB HID reported (device to PC) that it has not been tested and may not function properly.
 
@@ -21,9 +21,9 @@ Finally, enjoy! You can use `test.py` to test it. For example: `python3 test.py 
 
 I configured PC2 for USB_D+, PC4 for USB_D-, and PC1 for USB_DPU.
 
-Additionally, PA2 and PD6 are output pins controlled by HID data. PD4 is reserved for debugging and downloading.
+Additionally, PA1 and PA2 are output pins controlled by HID data. PD4 is reserved for debugging and downloading.
 
-The schematic is shown below.
+The reference schematic is shown below.
 
 ![](images/schematic.png)
 
