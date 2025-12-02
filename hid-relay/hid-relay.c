@@ -7,14 +7,22 @@
 static uint8_t usb_data[4];
 static uint8_t usb_report[4];
 
+static const uint32_t gpio_table[] =
+{
+    GPIOv_from_PORT_PIN(GPIO_port_A, 1),
+    GPIOv_from_PORT_PIN(GPIO_port_A, 2),
+};
+
 int main()
 {
     SystemInit();
     Delay_Ms(1); // Ensures USB re-enumeration after bootloader or reset; Spec demand >2.5µs ( TDDIS )
     usb_setup();
     GPIO_port_enable(GPIO_port_A);
-    GPIO_pinMode(GPIOv_from_PORT_PIN(GPIO_port_A, 1), GPIO_pinMode_O_pushPull, GPIO_Speed_2MHz);
-    GPIO_pinMode(GPIOv_from_PORT_PIN(GPIO_port_A, 2), GPIO_pinMode_O_pushPull, GPIO_Speed_2MHz);
+    for (uint32_t i = 0; i < sizeof(gpio_table) / sizeof(gpio_table[0]); i++)
+    {
+        GPIO_pinMode(gpio_table[i], GPIO_pinMode_O_pushPull, GPIO_Speed_2MHz);
+    }
 
     while (1)
     {
@@ -41,55 +49,48 @@ void usb_handle_user_data(struct usb_endpoint* e, int current_endpoint, uint8_t*
     {
         return;
     }
-
-    if (data[1] != 0 && data[1] != 1)
-    {
-        return;
-    }
-
-    if (data[2] > 0x05)
-    {
-        return;
-    }
-
     if (data[3] != (data[0] + data[1] + data[2]) % 0x100)
     {
         return;
     }
 
-    data[1] += 1;
+    data[1]--;
+    if (data[1] >= (sizeof(gpio_table) / sizeof(gpio_table[0])))
+    {
+        return;
+    }
 
     switch (data[2])
     {
     case 0x00:
         /* Turn off without feedback */
-        GPIO_digitalWrite_0(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+        GPIO_digitalWrite_0(gpio_table[data[1]]);
         return;
 
     case 0x01:
         /* Turn on without feedback */
-        GPIO_digitalWrite_1(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+        GPIO_digitalWrite_1(gpio_table[data[1]]);
         return;
 
     case 0x02:
         /* Turn off with feedback */
-        GPIO_digitalWrite_0(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+        GPIO_digitalWrite_0(gpio_table[data[1]]);
         break;
 
     case 0x03:
         /* Turn on with feedback */
-        GPIO_digitalWrite_1(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+        GPIO_digitalWrite_1(gpio_table[data[1]]);
         break;
 
     case 0x04:
         /* Toggle Pin */
-        if (GPIO_digitalRead(GPIOv_from_PORT_PIN(GPIO_port_A, data[1])))
+        if (GPIO_digitalRead(gpio_table[data[1]]))
         {
-            GPIO_digitalWrite_0(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+            GPIO_digitalWrite_0(gpio_table[data[1]]);
         }
         else
         {
-            GPIO_digitalWrite_1(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+            GPIO_digitalWrite_1(gpio_table[data[1]]);
         }
         break;
 
@@ -102,8 +103,8 @@ void usb_handle_user_data(struct usb_endpoint* e, int current_endpoint, uint8_t*
     }
 
     usb_report[0] = 0xA0;
-    usb_report[1] = data[1] - 1;
-    usb_report[2] = GPIO_digitalRead(GPIOv_from_PORT_PIN(GPIO_port_A, data[1]));
+    usb_report[1] = data[1] + 1;
+    usb_report[2] = GPIO_digitalRead(gpio_table[data[1]]);
     usb_report[3] = (usb_report[0] + usb_report[1] + usb_report[2]) % 0x100;
 }
 
