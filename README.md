@@ -18,7 +18,7 @@ First, you need to install the toolchain. You can refer to [this wiki page](http
 
 Then, go to the `hid-relay` folder. You can run `make` to build and download (make sure your WCH-LinkE and chip are connected), or run `make build` to build only.
 
-Finally, enjoy! You can use `test.py` to test it. For example: `python3 test.py 0 on`
+Finally, enjoy! You can use `test.py` to test it. For example: `python3 test.py 1 on`
 
 
 # Schematic
@@ -41,7 +41,7 @@ Send data (PC to device):
 | ------ | --------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Byte 0 | 0xA0      | Start flag                                                                                                               |
 | Byte 1 | 0x00-0xFF | Switch index, which switch will be used. You can modify the code to specific the IO.                                     |
-| Byte 2 | 0x00-0x05 | 0x00: OFF, 0x01: ON, 0x02: ON with feedback, 0x03: OFF with feedback, 0x04: toggle with feedback, 0x05: check the status |
+| Byte 2 | 0x00-0x05 | 0x00: OFF, 0x01: ON, 0x02: OFF with feedback, 0x03: ON with feedback, 0x04: toggle with feedback, 0x05: check the status |
 | Byte 3 | Checksum  | (byte[0] + Byte[1] + Byte[2]) % 0x100                                                                                    |
 
 Report data (device to PC. Not test):
