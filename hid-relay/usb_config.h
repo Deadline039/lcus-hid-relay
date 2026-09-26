@@ -2,7 +2,7 @@
 #define _USB_CONFIG_H
 
 //Defines the number of endpoints for this device. (Always add one for EP0). For two EPs, this should be 3.
-#define ENDPOINTS 2
+#define ENDPOINTS 3
 
 #define USB_PORT C     // [A,C,D] GPIO Port to use with D+, D- and DPU
 #define USB_PIN_DP 2   // [0-4] GPIO Number for USB D+ Pin
@@ -16,6 +16,7 @@
 #define RV003USB_OTHER_CONTROL     0
 #define RV003USB_HANDLE_USER_DATA  1
 #define RV003USB_HID_FEATURES      1
+#define RV003USB_USE_REBOOT_FEATURE_REPORT 0
 
 
 #ifndef __ASSEMBLER__
@@ -42,19 +43,21 @@ static const uint8_t device_descriptor[] = {
 	1, //Max number of configurations
 };
 
-static const uint8_t special_hid_desc[] = { 
-	HID_USAGE_PAGE ( 0xff ), // Vendor-defined page.
-	HID_USAGE      ( 0x00 ),
-	HID_REPORT_SIZE ( 8 ),
-	HID_COLLECTION ( HID_COLLECTION_LOGICAL ),
-		HID_REPORT_COUNT   ( 254 ),
-		HID_REPORT_ID      ( 0xaa )
+// Four-byte Input, Output, and Feature reports without Report IDs.
+static const uint8_t special_hid_desc[] = {
+	HID_USAGE_PAGE_N ( 0xff00, 2 ), // Vendor-defined page.
+	HID_USAGE      ( 0x01 ),
+	HID_COLLECTION ( HID_COLLECTION_APPLICATION ),
+		HID_LOGICAL_MIN    ( 0 ),
+		HID_LOGICAL_MAX_N  ( 255, 2 ),
+		HID_REPORT_SIZE    ( 8 ),
+		HID_REPORT_COUNT   ( 4 ),
 		HID_USAGE          ( 0x01 ),
-		HID_FEATURE        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,
-		HID_REPORT_COUNT   ( 63 ), // For use with `hidapitester --vidpid 1209/D003 --open --read-feature 171`
-		HID_REPORT_ID      ( 0xab )
+		HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
 		HID_USAGE          ( 0x01 ),
-		HID_FEATURE        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,
+		HID_OUTPUT         ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
+		HID_USAGE          ( 0x01 ),
+		HID_FEATURE        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ),
 	HID_COLLECTION_END,
 };
 
@@ -62,10 +65,8 @@ static const uint8_t config_descriptor[] = {
 	// configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
 	9, 					// bLength;
 	2,					// bDescriptorType;
-	0x22, 0x00,			// wTotalLength  	
+	0x29, 0x00,			// wTotalLength
 
-	//34, 0x00, //for just the one descriptor
-	
 	0x01,					// bNumInterfaces (Normally 1)
 	0x01,					// bConfigurationValue
 	0x00,					// iConfiguration
@@ -77,10 +78,10 @@ static const uint8_t config_descriptor[] = {
 	4,					// bDescriptorType
 	0,		            // bInterfaceNumber  = 1 instead of 0 -- well make it second.
 	0,					// bAlternateSetting
-	1,					// bNumEndpoints
+	2,					// bNumEndpoints
 	0x03,				// bInterfaceClass (0x03 = HID)
 	0x00,				// bInterfaceSubClass
-	0xff,				// bInterfaceProtocol (1 = Keyboard, 2 = Mouse)
+	0x00,				// bInterfaceProtocol (generic HID)
 	0,					// iInterface
 
 	9,					// bLength
@@ -95,8 +96,15 @@ static const uint8_t config_descriptor[] = {
 	0x05,         // Endpoint Descriptor (Must be 5)
 	0x81,         // Endpoint Address
 	0x03,         // Attributes
-	0x01,	0x00, // Size (We aren't using it)
-	100,          // Interval (We don't use it.)
+	0x04, 0x00,   // Four-byte Input report
+	10,           // Poll every 10 ms
+
+	7,            // Endpoint descriptor (For endpoint 2)
+	0x05,         // Endpoint Descriptor
+	0x02,         // OUT Endpoint Address
+	0x03,         // Interrupt transfer
+	0x04, 0x00,   // Four-byte Output report
+	10,           // Poll every 10 ms
 };
 
 #define STR_MANUFACTURER u"CNLohr"

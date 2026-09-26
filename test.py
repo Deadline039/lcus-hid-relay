@@ -19,55 +19,59 @@
 #                                                                            #
 # ========================================================================== #
 
-import sys
+import argparse
 import hid
 
 VENDOR_ID = 0x5131
 PRODUCT_ID = 0x2007
+COMMANDS = {"off": 0x00, "on": 0x01, "off-feedback": 0x02,
+            "on-feedback": 0x03, "toggle": 0x04, "status": 0x05}
+
 
 def find_usbrelay():
-    for device in hid.enumerate():
-        if device.get("vendor_id") == VENDOR_ID and device.get("product_id") == PRODUCT_ID:
-            return device
+    for device in hid.enumerate(VENDOR_ID, PRODUCT_ID):
+        return device
     return None
 
-def send_command(device_info, channel, onoff):
-    device = hid.device()
-    device.open(device_info['vendor_id'], device_info['product_id'])
-    if device is None:
-        print("Failed to open device.")
-        return
 
+def send_command(device_info, channel, command):
+    device = hid.device()
+    device.open_path(device_info["path"])
     try:
-        cmd = [0xA0, channel, onoff, 0xA0 + channel + onoff]
-        device.write(bytearray(cmd))
+        payload = [0xA0, channel, command, (0xA0 + channel + command) & 0xFF]
+        # Prefix unnumbered reports with ID 0 for HIDAPI; the USB payload is four bytes.
+        if device.write(bytearray([0] + payload)) != 5:
+            raise RuntimeError("Failed to write the complete command")
+        if command < 0x02:
+            return None
+        report = device.read(4, 1000)
+        if len(report) != 4:
+            raise RuntimeError("Timed out waiting for a four-byte status report")
+        if (report[0] != 0xA0 or report[1] != channel or report[2] not in (0, 1)
+                or report[3] != (sum(report[:3]) & 0xFF)):
+            raise RuntimeError(f"Invalid status report: {report}")
+        return report[2]
     finally:
         device.close()
 
+
 def main():
-    if len(sys.argv) != 3:
-        print("Usage:\n"
-              "\tpython script.py id on|off")
-        return
-    
-    try:
-        id = int(sys.argv[1])
-        if sys.argv[2].lower() == 'on':
-            onoff = 1
-        elif sys.argv[2].lower() == 'off':
-            onoff = 0
-        else:
-            raise ValueError
-    except ValueError:
-        print("Invalid command, use 'on' or 'off'")
-        return
-    
+    parser = argparse.ArgumentParser(description="Control a two-channel USB HID relay")
+    parser.add_argument("channel", type=int, choices=(1, 2))
+    parser.add_argument("command", choices=COMMANDS)
+    args = parser.parse_args()
     device_info = find_usbrelay()
     if device_info is None:
-        print("USB relay not found")
+        parser.exit(1, "USB relay not found\n")
+    try:
+        state = send_command(device_info, args.channel, COMMANDS[args.command])
+    except (OSError, RuntimeError) as error:
+        parser.exit(1, f"{error}\n")
+    if state is None:
+        print(f"Sent {args.command} to channel {args.channel}")
     else:
-        send_command(device_info, id, onoff)
-        print(f"Sent command to channel {id}: {'ON' if onoff else 'OFF'}")
+        print(f"Channel {args.channel}: {'ON' if state == 1 else 'OFF'}")
+
 
 if __name__ == "__main__":
     main()
