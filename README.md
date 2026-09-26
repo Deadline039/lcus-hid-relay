@@ -6,8 +6,6 @@ This is a USB HID relay that can control 2 lines. The instructions are compatibl
 
 Special thanks to [rv003usb](https://github.com/cnlohr/rv003usb) for creating the USB HID library, which allows me to run USB HID on the CH32V003J4M6. This chip has only 8 pins and does not integrate USB peripherals. Thanks also to the [PiKVM](https://github.com/pikvm/pikvm) Python script, which made testing possible.
 
-Status feedback is implemented through HID Input reports. The firmware builds successfully; USB enumeration and relay operation still need verification on physical hardware.
-
 # How to use
 
 You can download the firmware in the [release](https://github.com/Deadline039/lcus-hid-relay/releases). Then you need to use WCH-LinkE to download. Reference: [WCH-Link User Manual](https://akizukidenshi.com/goodsaffix/WCH-LinkUserManual.pdf)
